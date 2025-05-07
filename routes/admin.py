@@ -71,7 +71,12 @@ def toggle_patient_block(patient_id):
     
     status = "blocked" if patient.is_blocked else "unblocked"
     flash(f'Patient {patient.name} has been {status}.', 'success')
-    return redirect(url_for('admin.dashboard'))
+    
+    # Redirect back to patient details view if coming from there, otherwise to patients list
+    referrer = request.referrer
+    if referrer and 'view_patient' in referrer:
+        return redirect(url_for('admin.view_patient', patient_id=patient_id))
+    return redirect(url_for('admin.patients'))
 
 # Doctors Management
 @admin_bp.route('/doctors', methods=['GET', 'POST'])
