@@ -28,28 +28,44 @@ def dashboard():
 @admin_bp.route('/patients')
 @login_required
 def patients():
-    appointments = Appointment.query.join(Patient).join(Doctor).all()
+    try:
+        appointments = Appointment.query.join(Patient).join(Doctor).all()
+    except Exception as e:
+        app.logger.error(f"Error loading patient appointments: {str(e)}")
+        flash("There was an error loading the appointments. Please try again later.", "danger")
+        appointments = []
+        
     return render_template('admin/patients.html', appointments=appointments)
 
 # Update Appointment Status
 @admin_bp.route('/appointments/update/<int:appointment_id>/<status>', methods=['POST'])
 @login_required
 def update_appointment_status(appointment_id, status):
-    appointment = Appointment.query.get_or_404(appointment_id)
+    try:
+        # Use transaction
+        db.session.begin_nested()
+        
+        appointment = Appointment.query.get_or_404(appointment_id)
+        
+        if status in ['approved', 'rejected', 'pending']:
+            appointment.status = status
+            
+            # If rejected, free up the time slot
+            if status == 'rejected':
+                time_slot = TimeSlot.query.get(appointment.slot_id)
+                if time_slot:
+                    time_slot.is_booked = False
+            
+            db.session.commit()
+            flash(f'Appointment status updated to {status}.', 'success')
+        else:
+            db.session.rollback()
+            flash('Invalid status.', 'danger')
     
-    if status in ['approved', 'rejected', 'pending']:
-        appointment.status = status
-        
-        # If rejected, free up the time slot
-        if status == 'rejected':
-            time_slot = TimeSlot.query.get(appointment.slot_id)
-            if time_slot:
-                time_slot.is_booked = False
-        
-        db.session.commit()
-        flash(f'Appointment status updated to {status}.', 'success')
-    else:
-        flash('Invalid status.', 'danger')
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error updating appointment status: {str(e)}")
+        flash('An error occurred while updating the appointment status.', 'danger')
     
     return redirect(url_for('admin.patients'))
 
