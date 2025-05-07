@@ -9,12 +9,26 @@
         
         <!-- Statistics Cards -->
         <div class="row mb-4">
-            <div class="col-md-6 mb-3">
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-primary">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title">Total Appointments</h6>
+                                <h3 class="mb-0">{{ total_appointments }}</h3>
+                            </div>
+                            <i class="fas fa-calendar-check fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
                 <div class="card text-white bg-success">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="card-title">Accepted Appointments</h6>
+                                <h6 class="card-title">Accepted</h6>
                                 <h3 class="mb-0">{{ accepted_count }}</h3>
                             </div>
                             <i class="fas fa-check-circle fa-3x opacity-50"></i>
@@ -23,12 +37,26 @@
                 </div>
             </div>
             
-            <div class="col-md-6 mb-3">
+            <div class="col-md-3 mb-3">
+                <div class="card text-white bg-warning">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title">Pending</h6>
+                                <h3 class="mb-0">{{ pending_count }}</h3>
+                            </div>
+                            <i class="fas fa-hourglass-half fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3 mb-3">
                 <div class="card text-white bg-danger">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="card-title">Rejected Appointments</h6>
+                                <h6 class="card-title">Rejected</h6>
                                 <h3 class="mb-0">{{ rejected_count }}</h3>
                             </div>
                             <i class="fas fa-times-circle fa-3x opacity-50"></i>
@@ -81,7 +109,7 @@
             </div>
             
             <!-- Appointment Status Chart -->
-            <div class="col-md-12 mb-4">
+            <div class="col-md-6 mb-4">
                 <div class="card">
                     <div class="card-header">
                         <h5 class="mb-0">Appointment Status Distribution</h5>
@@ -96,6 +124,20 @@
                                 <i class="fas fa-info-circle"></i> Not enough data to display status distribution.
                             </div>
                         {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Monthly Appointment Chart -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Appointments by Month ({{ now.year }})</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="monthlyChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -209,5 +251,35 @@
         }
     });
     {% endif %}
+    
+    // Monthly Appointment Chart
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    const monthlyChart = new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+            labels: {{ month_names|tojson }},
+            datasets: [{
+                label: 'Appointments',
+                data: {{ monthly_counts|tojson }},
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 2,
+                tension: 0.3,
+                fill: true
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
 </script>
 {% endblock %}
