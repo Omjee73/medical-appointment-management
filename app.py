@@ -1,9 +1,10 @@
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_login import LoginManager, current_user
 from flask_sqlalchemy import SQLAlchemy
+from flask_session import Session
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -38,6 +39,18 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'auth.login'
 login_manager.login_message_category = 'info'
+login_manager.session_protection = None  # Disable session protection to allow multiple logins
+
+# Configure session for cookie-based storage
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = False
+app.config['SESSION_USE_SIGNER'] = True
+app.config['SESSION_COOKIE_NAME'] = 'medical_app_session'
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
+
+# Initialize Flask-Session
+Session(app)
 
 # Import models after db is defined to avoid circular imports
 with app.app_context():

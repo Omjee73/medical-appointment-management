@@ -89,8 +89,12 @@ def book_appointment(doctor_id):
             available_slots = []
             form.time_slot.choices = []
     
+    # Make sure the form has choices for time_slot
+    if len(form.time_slot.choices) == 0:
+        form.time_slot.choices = [(-1, 'No slots available')]
+    
     # Process form submission
-    if form.validate_on_submit():
+    if form.validate_on_submit() and form.time_slot.data != -1:
         selected_slot = TimeSlot.query.get(form.time_slot.data)
         
         if selected_slot and not selected_slot.is_booked:
@@ -177,6 +181,9 @@ def receipt(appointment_id):
 @user_bp.route('/summary')
 @login_required
 def summary():
+    # Get total appointment count
+    total_appointments = Appointment.query.filter_by(patient_id=current_user.id).count()
+    
     # Get the user's appointment count by status
     appointment_status = db.session.query(
         Appointment.status,
@@ -190,15 +197,22 @@ def summary():
     
     accepted_count = 0
     rejected_count = 0
+    pending_count = 0
+    completed_count = 0
     
     for status, count in appointment_status:
         status_labels.append(status.capitalize())
         status_counts.append(count)
         
-        if status == 'approved' or status == 'completed':
+        if status == 'approved':
             accepted_count += count
+        elif status == 'completed':
+            completed_count += count
+            accepted_count += count  # Completed appointments were also accepted
         elif status == 'rejected':
             rejected_count += count
+        elif status == 'pending':
+            pending_count += count
     
     # Get preferred time slots
     time_preferences = db.session.query(
@@ -222,6 +236,24 @@ def summary():
     specialist_labels = [sp[0] for sp in specialist_preferences]
     specialist_counts = [sp[1] for sp in specialist_preferences]
     
+    # Get appointment history by month
+    current_year = datetime.now().year
+    monthly_data = db.session.query(
+        func.strftime('%m', Appointment.date).label('month'),
+        func.count(Appointment.id)
+    ).filter(
+        Appointment.patient_id == current_user.id,
+        func.strftime('%Y', Appointment.date) == str(current_year)
+    ).group_by('month').all()
+    
+    months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+    month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    monthly_counts = [0] * 12
+    
+    for month, count in monthly_data:
+        if month in months:
+            monthly_counts[months.index(month)] = count
+    
     return render_template(
         'user/summary.html',
         status_labels=status_labels,
@@ -231,7 +263,12 @@ def summary():
         specialist_labels=specialist_labels,
         specialist_counts=specialist_counts,
         accepted_count=accepted_count,
-        rejected_count=rejected_count
+        rejected_count=rejected_count,
+        pending_count=pending_count,
+        completed_count=completed_count,
+        total_appointments=total_appointments,
+        month_names=month_names,
+        monthly_counts=monthly_counts
     )
 
 # User Profile
