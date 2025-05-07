@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}User Summary - Medical Appointment Booking{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-4"><i class="fas fa-chart-bar"></i> My Health Summary</h2>
+        
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="card text-white bg-success">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title">Accepted Appointments</h6>
+                                <h3 class="mb-0">{{ accepted_count }}</h3>
+                            </div>
+                            <i class="fas fa-check-circle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-3">
+                <div class="card text-white bg-danger">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title">Rejected Appointments</h6>
+                                <h3 class="mb-0">{{ rejected_count }}</h3>
+                            </div>
+                            <i class="fas fa-times-circle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts -->
+        <div class="row">
+            <!-- Preferred Time Slots Chart -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Most Preferred Time Slots</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if time_labels %}
+                            <div class="chart-container">
+                                <canvas id="timePreferencesChart"></canvas>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> Not enough data to display time preferences.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Most Booked Specialist Types Chart -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Most Visited Specialists</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if specialist_labels %}
+                            <div class="chart-container">
+                                <canvas id="specialistChart"></canvas>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> Not enough data to display specialist preferences.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Appointment Status Chart -->
+            <div class="col-md-12 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Appointment Status Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if status_labels %}
+                            <div class="chart-container">
+                                <canvas id="statusChart"></canvas>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> Not enough data to display status distribution.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    {% if time_labels %}
+    // Preferred Time Slots Chart
+    const timeCtx = document.getElementById('timePreferencesChart').getContext('2d');
+    const timeChart = new Chart(timeCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ time_labels|tojson }},
+            datasets: [{
+                label: 'Frequency',
+                data: {{ time_counts|tojson }},
+                backgroundColor: 'rgba(52, 152, 219, 0.7)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+    {% endif %}
+    
+    {% if specialist_labels %}
+    // Most Booked Specialist Types Chart
+    const specCtx = document.getElementById('specialistChart').getContext('2d');
+    const specialistChart = new Chart(specCtx, {
+        type: 'pie',
+        data: {
+            labels: {{ specialist_labels|tojson }},
+            datasets: [{
+                data: {{ specialist_counts|tojson }},
+                backgroundColor: [
+                    'rgba(46, 204, 113, 0.7)',
+                    'rgba(52, 152, 219, 0.7)',
+                    'rgba(155, 89, 182, 0.7)',
+                    'rgba(241, 196, 15, 0.7)',
+                    'rgba(230, 126, 34, 0.7)'
+                ],
+                borderColor: [
+                    'rgba(46, 204, 113, 1)',
+                    'rgba(52, 152, 219, 1)',
+                    'rgba(155, 89, 182, 1)',
+                    'rgba(241, 196, 15, 1)',
+                    'rgba(230, 126, 34, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+    {% endif %}
+    
+    {% if status_labels %}
+    // Appointment Status Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    const statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ status_labels|tojson }},
+            datasets: [{
+                data: {{ status_counts|tojson }},
+                backgroundColor: [
+                    'rgba(241, 196, 15, 0.7)',  // Pending - yellow
+                    'rgba(46, 204, 113, 0.7)',  // Approved - green
+                    'rgba(230, 126, 34, 0.7)',  // Completed - orange
+                    'rgba(231, 76, 60, 0.7)'    // Rejected - red
+                ],
+                borderColor: [
+                    'rgba(241, 196, 15, 1)',
+                    'rgba(46, 204, 113, 1)',
+                    'rgba(230, 126, 34, 1)',
+                    'rgba(231, 76, 60, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right'
+                }
+            }
+        }
+    });
+    {% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Patients Management - Medical Appointment Booking{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-4"><i class="fas fa-users"></i> Patients Management</h2>
+        
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">All Appointment Requests</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Patient Name</th>
+                                <th>Doctor</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for appointment in appointments %}
+                            <tr>
+                                <td>{{ appointment.patient.name }}</td>
+                                <td>Dr. {{ appointment.doctor.name }} ({{ appointment.doctor.specialization }})</td>
+                                <td>{{ appointment.date|datetimeformat }}</td>
+                                <td>{{ appointment.time }}</td>
+                                <td>
+                                    {% if appointment.status == 'pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% elif appointment.status == 'approved' %}
+                                        {% if appointment.is_completed %}
+                                            <span class="badge bg-info">Completed</span>
+                                        {% else %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% endif %}
+                                    {% elif appointment.status == 'rejected' %}
+                                        <span class="badge bg-danger">Rejected</span>
+                                    {% endif %}
+                                </td>
+                                <td class="d-flex gap-1">
+                                    {% if appointment.status == 'pending' %}
+                                        <form method="POST" action="{{ url_for('admin.update_appointment_status', appointment_id=appointment.id, status='approved') }}">
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="fas fa-check"></i> Accept
+                                            </button>
+                                        </form>
+                                        
+                                        <form method="POST" action="{{ url_for('admin.update_appointment_status', appointment_id=appointment.id, status='rejected') }}">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-times"></i> Decline
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <form method="POST" action="{{ url_for('admin.update_appointment_status', appointment_id=appointment.id, status='pending') }}">
+                                            <button type="submit" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-clock"></i> Reset to Pending
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center">No appointment requests found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Doctors Management - Medical Appointment Booking{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-4"><i class="fas fa-user-md"></i> Doctors Management</h2>
+        
+        <div class="row">
+            <!-- Add/Edit Doctor Form -->
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        {% if edit_mode %}
+                            <h5 class="mb-0"><i class="fas fa-edit"></i> Edit Doctor</h5>
+                        {% else %}
+                            <h5 class="mb-0"><i class="fas fa-plus"></i> Add New Doctor</h5>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" 
+                              action="{% if edit_mode %}{{ url_for('admin.edit_doctor', doctor_id=doctor_id) }}{% else %}{{ url_for('admin.doctors') }}{% endif %}">
+                            {{ form.csrf_token }}
+                            
+                            <div class="form-group mb-3">
+                                <label for="name">{{ form.name.label }}</label>
+                                {{ form.name(class="form-control", placeholder="Enter doctor's name") }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.name.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="specialization">{{ form.specialization.label }}</label>
+                                {{ form.specialization(class="form-control", placeholder="e.g., Cardiologist, Dentist") }}
+                                {% if form.specialization.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.specialization.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="fees">{{ form.fees.label }}</label>
+                                {{ form.fees(class="form-control", placeholder="Enter consultation fees") }}
+                                {% if form.fees.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.fees.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="address">{{ form.address.label }}</label>
+                                {{ form.address(class="form-control", rows=2, placeholder="Enter clinic address") }}
+                                {% if form.address.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.address.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="start_time">{{ form.start_time.label }}</label>
+                                        {{ form.start_time(class="form-control", placeholder="HH:MM") }}
+                                        {% if form.start_time.errors %}
+                                            <div class="text-danger">
+                                                {% for error in form.start_time.errors %}
+                                                    <small>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="end_time">{{ form.end_time.label }}</label>
+                                        {{ form.end_time(class="form-control", placeholder="HH:MM") }}
+                                        {% if form.end_time.errors %}
+                                            <div class="text-danger">
+                                                {% for error in form.end_time.errors %}
+                                                    <small>{{ error }}</small>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="slot_duration">{{ form.slot_duration.label }}</label>
+                                {{ form.slot_duration(class="form-control", placeholder="e.g., 30") }}
+                                {% if form.slot_duration.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.slot_duration.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group mb-3">
+                                <label for="available_days">{{ form.available_days.label }}</label>
+                                {{ form.available_days(class="form-control", placeholder="e.g., Monday,Tuesday,Wednesday") }}
+                                <small class="form-text text-muted">Comma-separated list of days</small>
+                                {% if form.available_days.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.available_days.errors %}
+                                            <small>{{ error }}</small>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                {% if edit_mode %}
+                                    {{ form.submit(class="btn btn-warning", value="Update Doctor") }}
+                                    <a href="{{ url_for('admin.doctors') }}" class="btn btn-secondary">Cancel</a>
+                                {% else %}
+                                    {{ form.submit(class="btn btn-primary") }}
+                                {% endif %}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Doctors List -->
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">All Doctors</h5>
+                        <span class="badge bg-primary">{{ doctors|length }} Doctors</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            {% for doctor in doctors %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card doctor-card h-100">
+                                    <div class="card-header">
+                                        <h5 class="mb-0">Dr. {{ doctor.name }}</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <p><strong>Specialist:</strong> {{ doctor.specialization }}</p>
+                                        <p><strong>Fees:</strong> ${{ doctor.fees }}</p>
+                                        <p><strong>Slot Duration:</strong> {{ doctor.slot_duration }} min</p>
+                                        <p><strong>Available:</strong> {{ doctor.start_time }} to {{ doctor.end_time }}</p>
+                                        <p><strong>Days:</strong> {{ doctor.available_days }}</p>
+                                        <div class="d-flex justify-content-between mt-3">
+                                            <a href="{{ url_for('admin.edit_doctor', doctor_id=doctor.id) }}" class="btn btn-warning">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <a href="{{ url_for('admin.view_doctor_slots', doctor_id=doctor.id) }}" class="btn btn-info">
+                                                <i class="fas fa-calendar-alt"></i> Slots
+                                            </a>
+                                            <form method="POST" action="{{ url_for('admin.delete_doctor', doctor_id=doctor.id) }}" 
+                                                  onsubmit="return confirm('Are you sure you want to delete this doctor?');">
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> No doctors added yet. Use the form to add new doctors.
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

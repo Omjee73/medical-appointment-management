@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}User Dashboard - Medical Appointment Booking{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-4"><i class="fas fa-home"></i> Home</h2>
+        
+        <!-- Specialization Filter -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-filter"></i> Filter Doctors</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="btn-group flex-wrap">
+                            <a href="{{ url_for('user.dashboard') }}" class="btn btn-outline-primary {% if not selected_specialty %}active{% endif %}">
+                                All Specialties
+                            </a>
+                            {% for specialty in specialties %}
+                            <a href="{{ url_for('user.dashboard', specialty=specialty) }}" 
+                               class="btn btn-outline-primary {% if selected_specialty == specialty %}active{% endif %}">
+                                {{ specialty }}
+                            </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <strong>Showing:</strong> 
+                        {% if selected_specialty %}
+                            {{ selected_specialty }} Specialists
+                        {% else %}
+                            All Doctors
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Doctors List -->
+        <div class="row">
+            {% for doctor in doctors %}
+            <div class="col-md-4 mb-4">
+                <div class="card doctor-card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Dr. {{ doctor.name }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3 text-center">
+                            <div class="display-3 text-muted">
+                                <i class="fas fa-user-md"></i>
+                            </div>
+                        </div>
+                        <div class="doctor-info">
+                            <p><strong><i class="fas fa-stethoscope"></i> Specialist:</strong> {{ doctor.specialization }}</p>
+                            <p><strong><i class="fas fa-dollar-sign"></i> Fees:</strong> ${{ doctor.fees }}</p>
+                            <p><strong><i class="fas fa-clock"></i> Slot Time:</strong> {{ doctor.slot_duration }} min</p>
+                            <p><strong><i class="fas fa-calendar"></i> Available:</strong> {{ doctor.start_time }} to {{ doctor.end_time }}</p>
+                            <p><strong><i class="fas fa-calendar-week"></i> Days:</strong> {{ doctor.available_days }}</p>
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('user.book_appointment', doctor_id=doctor.id) }}" class="btn btn-success">
+                                <i class="fas fa-calendar-plus"></i> Book Appointment
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    {% if selected_specialty %}
+                        <i class="fas fa-info-circle"></i> No doctors found for {{ selected_specialty }} specialty.
+                    {% else %}
+                        <i class="fas fa-info-circle"></i> No doctors available at the moment.
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

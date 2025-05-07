@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Slots - Medical Appointment Booking{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2 class="mb-4">
+            <i class="fas fa-calendar-alt"></i> Slot Management for Dr. {{ doctor.name }}
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-secondary float-end">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </h2>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Doctor Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p><strong>Specialization:</strong> {{ doctor.specialization }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p><strong>Available Time:</strong> {{ doctor.start_time }} to {{ doctor.end_time }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p><strong>Slot Duration:</strong> {{ doctor.slot_duration }} minutes</p>
+                    </div>
+                </div>
+                <p><strong>Available Days:</strong> {{ doctor.available_days }}</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Time Slots for {{ selected_date|datetimeformat }}</h5>
+                <div class="btn-group">
+                    {% for date in dates %}
+                    <a href="{{ url_for('admin.view_doctor_slots', doctor_id=doctor.id, date=date|datetimeformat) }}" 
+                       class="btn btn-sm {% if date == selected_date %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                        {{ date|datetimeformat('%d %b') }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="card-body">
+                {% if slots %}
+                    <p class="mb-3"><strong>Click on a slot to toggle its availability:</strong></p>
+                    <div class="row">
+                        {% for slot in slots %}
+                        <div class="col-md-2 col-sm-4 col-6 mb-3">
+                            <form method="POST" action="{{ url_for('admin.toggle_slot', slot_id=slot.id) }}">
+                                <button type="submit" class="time-slot w-100 {% if slot.is_booked %}slot-booked{% else %}slot-available{% endif %}">
+                                    {{ slot.start_time }}
+                                    <br>
+                                    <small>
+                                        {% if slot.is_booked %}
+                                            <i class="fas fa-lock"></i> Reserved
+                                        {% else %}
+                                            <i class="fas fa-check-circle"></i> Available
+                                        {% endif %}
+                                    </small>
+                                </button>
+                            </form>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    {% if day_name in doctor.available_days_list %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> No slots generated yet for this date. They will be generated when you visit this page.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i> The doctor is not available on {{ selected_date|datetimeformat('%A') }}s.
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
