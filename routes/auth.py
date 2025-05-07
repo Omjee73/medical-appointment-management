@@ -21,6 +21,14 @@ def login():
         user = User.query.filter_by(email=form.email.data).first()
         
         if user and user.check_password(form.password.data):
+            # Check if user type matches selected type
+            if user.user_type != form.user_type.data:
+                if form.user_type.data == 'admin':
+                    flash('This email is not registered as an administrator account.', 'danger')
+                else:
+                    flash('This email is not registered as a patient account.', 'danger')
+                return redirect(url_for('auth.login'))
+            
             # Check if patient is blocked
             if user.user_type == 'patient' and user.is_blocked:
                 flash('Your account has been blocked. Please contact the administrator.', 'danger')

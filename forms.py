@@ -9,6 +9,7 @@ from datetime import datetime
 class LoginForm(FlaskForm):
     email = StringField('Email', validators=[DataRequired(), Email()])
     password = PasswordField('Password', validators=[DataRequired()])
+    user_type = SelectField('Account Type', choices=[('patient', 'Patient'), ('admin', 'Administrator')], default='patient')
     submit = SubmitField('Login')
 
 class RegisterForm(FlaskForm):
