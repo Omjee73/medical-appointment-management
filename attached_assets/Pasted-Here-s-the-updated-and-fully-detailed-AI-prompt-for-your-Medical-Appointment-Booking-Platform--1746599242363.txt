@@ -1,0 +1,209 @@
+Here’s the **updated and fully detailed AI prompt** for your **Medical Appointment Booking Platform** using **Flask, Bootstrap, HTML, CSS, Python, and SQLite**, incorporating **everything** you specified — all user types, tabs, features, conditions, and analytics. You can directly paste this into an AI code generation tool to build your entire platform from a single prompt:
+
+---
+
+### ✅ FULL GENERATIVE PROMPT
+
+I want you to build a **complete, fully functional Medical Appointment Booking Platform** using only these technologies:
+**Flask (with Blueprints), Bootstrap, HTML, CSS, Python, and SQLite database.**
+Do NOT use JavaScript frameworks or any external tools.
+
+---
+
+### 👥 USER TYPES
+
+1. **Admin**:
+
+   * Pre-defined accounts (2-3) with email/password.
+   * Login only (no signup form).
+
+2. **Patient/User**:
+
+   * Can register via signup form.
+   * Login if already registered.
+   * Account includes: email, password, name, phone, address, gender, age.
+
+---
+
+### 🔐 AUTH SYSTEM
+
+* Flask login with session management.
+* Separate login for **Admin** and **User**.
+* Passwords stored securely (hashed).
+* Logout redirects to login page.
+
+---
+
+### 🧑‍⚕️ ADMIN DASHBOARD
+
+Tabs: `Home`, `Patients`, `Doctors`, `Summary`, `Edit Profile`
+
+#### 📍 Home:
+
+* Two sections: **All Patients** and **All Doctors**
+
+* **All Patients**:
+
+  * List all registered patients.
+  * Show their email, password.
+  * Block/unblock access to their account.
+  * “View” option opens:
+
+    ```
+    Personal Information
+    Name: Omjee
+    Email: pat123@exp.com
+    Phone: 07379321513
+    Address: Okdenganj Ballia Ballia Uttar Pradesh India277001
+
+    Appointment History:
+    Date    Time    Doctor      Status
+    2025-05-06   10:30  Dr. Raghav   pending
+    ```
+
+* **All Doctors**:
+
+  * Each doctor displayed as a **card**:
+
+    ```
+    Dr. Raghav
+    Specialist: Cardiologist
+    Time: 30 min
+    Available: 10:00 to 13:00
+    Days: Monday–Saturday
+    [View All Slots]
+    ```
+  * “View All Slots” lets admin see slot availability by date, reserve or free slots.
+
+---
+
+#### 👨‍⚕️ Patients Tab:
+
+* View all raised appointment requests.
+* Accept / Decline / Wait (Pending).
+* Each appointment row includes patient name, doctor, time, date, status.
+
+---
+
+#### 🩺 Doctors Tab:
+
+* Add Doctor:
+
+  * Name, Specialization, Fees, Address, Appointment Time, Slot Duration, Available Days.
+* Display all doctors as **cards**.
+* Edit or delete existing doctors.
+
+---
+
+#### 📈 Summary Tab:
+
+* Dashboard analytics:
+
+  * Total doctors
+  * Total patients
+  * Appointments today (line chart)
+  * Doctor with highest patients (bar chart)
+
+---
+
+#### ✏️ Edit Profile:
+
+* Admin can edit their own email, password, etc.
+* Button to **Save** and **Logout** (redirects to login page)
+
+---
+
+### 🧑‍💻 USER DASHBOARD
+
+Tabs: `Home`, `Appointment`, `Summary`, `Edit Profile`
+
+#### 🏠 Home:
+
+* View all doctors or filter by specialty (Dentist, Surgeon, Eye Specialist, etc.)
+* Each doctor shown as a card with BOOK button.
+* On clicking **BOOK**:
+
+  * Appointment Form:
+
+    * Auto-fill: name, email, phone, gender, age, address
+    * Choose appointment date
+    * View slots only from available ones set by admin
+    * Submit button with confirmation message
+
+---
+
+#### 📅 Appointment Tab:
+
+* Shows list of all appointments by the user:
+* Each row contains: Doctor, Date, Time, Status, View/Download Receipt
+* Status logic:
+
+  1. **Rejected**: Appointment rejected by Admin.
+  2. **Approved & Completed**: Appointment accepted, time passed — allow **receipt download**.
+  3. **Approved & Scheduled**: Appointment accepted, upcoming — allow **receipt download**.
+  4. **Pending/Waitlist**: Admin hasn’t responded or marked as wait — show status only.
+
+---
+
+#### 📊 Summary Tab:
+
+* Analytics for that specific user:
+
+  * **Bar Chart**: Most preferred time slots
+  * **Pie Chart**: Most booked specialist type
+  * Accepted appointments count
+  * Rejected appointments count
+
+---
+
+#### ✏️ Edit Profile:
+
+* User can update email, phone, gender, age, password, etc.
+* **Save** button.
+* **Logout** button redirects to login.
+
+---
+
+### 📁 PROJECT STRUCTURE
+
+```
+/medical_app
+  /static
+    /css
+  /templates
+    base.html
+    login.html
+    register.html
+    admin_dashboard.html
+    user_dashboard.html
+    appointment_form.html
+    view_slots.html
+    summary_admin.html
+    summary_user.html
+    edit_profile.html
+  app.py
+  models.py
+  forms.py
+  config.py
+  db.sqlite3
+```
+
+---
+
+### 🔧 TECHNICAL DETAILS
+
+* Use Flask Blueprints to separate admin and user routes.
+* Use Flask-WTF for forms.
+* Use Jinja2 template inheritance.
+* Use Bootstrap for UI layout, cards, tabs, forms.
+* Add comments to all Python files.
+* No external APIs or tools — everything local and backend-rendered.
+* Create seed admin data in DB during first run.
+
+---
+
+💡 All data (doctors, slots, appointments, analytics) must be dynamic and saved in **SQLite database**. Make sure everything is fully connected and works end-to-end without manual coding after generation.
+
+---
+
+Let me know if you want me to generate the actual code for this entire app from this prompt.
