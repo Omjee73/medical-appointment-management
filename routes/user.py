@@ -4,7 +4,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy import func
 from datetime import datetime, timedelta
 import io
-from app import db
+from app import db, app
 from models import Patient, Doctor, Appointment, TimeSlot
 from forms import AppointmentForm, UserProfileForm
 
@@ -95,29 +95,40 @@ def book_appointment(doctor_id):
     
     # Process form submission
     if form.validate_on_submit() and form.time_slot.data != -1:
-        selected_slot = TimeSlot.query.get(form.time_slot.data)
-        
-        if selected_slot and not selected_slot.is_booked:
-            # Mark slot as booked
-            selected_slot.is_booked = True
+        try:
+            # Use a new transaction
+            db.session.begin_nested()
             
-            # Create appointment
-            new_appointment = Appointment(
-                patient_id=current_user.id,
-                doctor_id=doctor_id,
-                slot_id=selected_slot.id,
-                date=form.date.data,
-                time=selected_slot.start_time,
-                status='pending'  # Initial status is pending
-            )
+            selected_slot = TimeSlot.query.get(form.time_slot.data)
             
-            db.session.add(new_appointment)
-            db.session.commit()
-            
-            flash('Appointment booked successfully! Waiting for admin approval.', 'success')
-            return redirect(url_for('user.appointments'))
-        else:
-            flash('Selected time slot is no longer available.', 'danger')
+            # Verify slot exists and is not booked
+            if selected_slot and not selected_slot.is_booked:
+                # Mark slot as booked
+                selected_slot.is_booked = True
+                
+                # Create appointment
+                new_appointment = Appointment(
+                    patient_id=current_user.id,
+                    doctor_id=doctor_id,
+                    slot_id=selected_slot.id,
+                    date=form.date.data,
+                    time=selected_slot.start_time,
+                    status='pending'  # Initial status is pending
+                )
+                
+                db.session.add(new_appointment)
+                db.session.commit()
+                
+                flash('Appointment booked successfully! Waiting for admin approval.', 'success')
+                return redirect(url_for('user.appointments'))
+            else:
+                db.session.rollback()
+                flash('Selected time slot is no longer available.', 'danger')
+        except Exception as e:
+            # Rollback in case of any error
+            db.session.rollback()
+            app.logger.error(f"Error booking appointment: {str(e)}")
+            flash('An error occurred while booking your appointment. Please try again.', 'danger')
     
     # Get available dates (next 7 days where doctor is available)
     available_dates = []
@@ -238,21 +249,46 @@ def summary():
     
     # Get appointment history by month
     current_year = datetime.now().year
-    monthly_data = db.session.query(
-        func.strftime('%m', Appointment.date).label('month'),
-        func.count(Appointment.id)
-    ).filter(
-        Appointment.patient_id == current_user.id,
-        func.strftime('%Y', Appointment.date) == str(current_year)
-    ).group_by('month').all()
+    now = datetime.now()
+    try:
+        # For PostgreSQL
+        monthly_data = db.session.query(
+            func.extract('month', Appointment.date).label('month'),
+            func.count(Appointment.id)
+        ).filter(
+            Appointment.patient_id == current_user.id,
+            func.extract('year', Appointment.date) == current_year
+        ).group_by('month').all()
+    except Exception:
+        # Fallback for SQLite
+        try:
+            monthly_data = db.session.query(
+                func.strftime('%m', Appointment.date).label('month'),
+                func.count(Appointment.id)
+            ).filter(
+                Appointment.patient_id == current_user.id,
+                func.strftime('%Y', Appointment.date) == str(current_year)
+            ).group_by('month').all()
+        except Exception as e:
+            app.logger.error(f"Error getting monthly data: {str(e)}")
+            monthly_data = []
     
     months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
     month_names = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
     monthly_counts = [0] * 12
     
     for month, count in monthly_data:
-        if month in months:
-            monthly_counts[months.index(month)] = count
+        try:
+            # Check if it's a string (SQLite) or number (PostgreSQL)
+            if isinstance(month, str) and month in months:
+                monthly_counts[months.index(month)] = count
+            elif isinstance(month, (int, float)):
+                # PostgreSQL returns month as a number (1-12)
+                month_idx = int(month) - 1
+                if 0 <= month_idx < 12:
+                    monthly_counts[month_idx] = count
+        except (ValueError, TypeError) as e:
+            app.logger.error(f"Error processing month {month}: {str(e)}")
     
     return render_template(
         'user/summary.html',

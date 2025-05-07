@@ -3,7 +3,7 @@ from flask_login import login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy import func, extract
 from datetime import datetime, timedelta, date
-from app import db
+from app import db, app
 from models import Admin, Patient, Doctor, Appointment, TimeSlot, User
 from forms import DoctorForm, AdminProfileForm
 
