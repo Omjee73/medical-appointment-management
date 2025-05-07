@@ -93,7 +93,7 @@ def doctors():
             start_time=form.start_time.data,
             end_time=form.end_time.data,
             slot_duration=form.slot_duration.data,
-            available_days=form.available_days.data
+            available_days=','.join(form.available_days.data)
         )
         
         db.session.add(doctor)

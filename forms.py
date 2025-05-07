@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, SelectMultipleField
 from wtforms import IntegerField, DateField, TimeField, TextAreaField, BooleanField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, NumberRange, ValidationError
 from wtforms.widgets import CheckboxInput
@@ -38,7 +38,18 @@ class DoctorForm(FlaskForm):
     start_time = StringField('Start Time (HH:MM)', validators=[DataRequired()])
     end_time = StringField('End Time (HH:MM)', validators=[DataRequired()])
     slot_duration = IntegerField('Slot Duration (in minutes)', validators=[DataRequired(), NumberRange(min=10, max=120)])
-    available_days = StringField('Available Days (e.g., Monday,Tuesday,Wednesday)', validators=[DataRequired()])
+    available_days = SelectMultipleField('Available Days', 
+        choices=[
+            ('Monday', 'Monday'),
+            ('Tuesday', 'Tuesday'), 
+            ('Wednesday', 'Wednesday'), 
+            ('Thursday', 'Thursday'), 
+            ('Friday', 'Friday'), 
+            ('Saturday', 'Saturday'), 
+            ('Sunday', 'Sunday')
+        ],
+        validators=[DataRequired()]
+    )
     submit = SubmitField('Save Doctor')
     
     def validate_start_time(form, field):

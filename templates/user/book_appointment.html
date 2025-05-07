@@ -134,11 +134,9 @@
                                 </div>
                             </form>
                         {% else %}
-                            {% if selected_date and selected_date >= today %}
-                                <div class="alert alert-warning">
-                                    <i class="fas fa-exclamation-triangle"></i> No available time slots for the selected date. Please choose another date.
-                                </div>
-                            {% endif %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> No available time slots for the selected date. Please choose another date.
+                            </div>
                         {% endif %}
                     </div>
                 </div>
