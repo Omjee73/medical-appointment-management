@@ -111,6 +111,10 @@ def edit_doctor(doctor_id):
     doctor = Doctor.query.get_or_404(doctor_id)
     form = DoctorForm(obj=doctor)
     
+    # Populate available days multiple select field
+    if request.method == 'GET':
+        form.available_days.data = doctor.available_days.split(',')
+    
     if form.validate_on_submit():
         doctor.name = form.name.data
         doctor.specialization = form.specialization.data
@@ -119,7 +123,7 @@ def edit_doctor(doctor_id):
         doctor.start_time = form.start_time.data
         doctor.end_time = form.end_time.data
         doctor.slot_duration = form.slot_duration.data
-        doctor.available_days = form.available_days.data
+        doctor.available_days = ','.join(form.available_days.data)
         
         db.session.commit()
         flash('Doctor information updated successfully!', 'success')

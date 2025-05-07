@@ -131,7 +131,8 @@ def book_appointment(doctor_id):
         doctor=doctor,
         patient=current_user,
         available_dates=available_dates,
-        selected_date=form.date.data if form.date.data else today
+        selected_date=form.date.data if form.date.data else today,
+        today=today
     )
 
 # View All Appointments
