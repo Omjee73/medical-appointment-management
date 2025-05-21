@@ -1,6 +1,6 @@
 from datetime import datetime
 from flask_login import UserMixin
-from app import db
+from extensions import db
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Base User model for authentication
@@ -109,7 +109,5 @@ class Appointment(db.Model):
     
     @property
     def is_completed(self):
-        # Appointment is completed if it's approved and the date has passed
-        if self.status == 'approved' and self.date < datetime.utcnow().date():
-            return True
-        return False
+        # Only return True if status is explicitly set to 'completed'
+        return self.status == 'completed'

@@ -27,7 +27,7 @@
                         </div>
                         <div class="doctor-info">
                             <p><strong><i class="fas fa-stethoscope"></i> Specialist:</strong> {{ doctor.specialization }}</p>
-                            <p><strong><i class="fas fa-dollar-sign"></i> Fees:</strong> ${{ doctor.fees }}</p>
+                            <p><strong><i class="fas fa-dollar-sign"></i> Fees:</strong> ₹{{ doctor.fees }}</p>
                             <p><strong><i class="fas fa-clock"></i> Slot Time:</strong> {{ doctor.slot_duration }} min</p>
                             <p><strong><i class="fas fa-calendar"></i> Available:</strong> {{ doctor.start_time }} to {{ doctor.end_time }}</p>
                             <p><strong><i class="fas fa-calendar-week"></i> Days:</strong> {{ doctor.available_days }}</p>
@@ -119,7 +119,7 @@
                                         <ul class="mb-0">
                                             <li>Doctor: Dr. {{ doctor.name }} ({{ doctor.specialization }})</li>
                                             <li>Date: {{ selected_date|datetimeformat }}</li>
-                                            <li>Fees: ${{ doctor.fees }}</li>
+                                            <li>Fees: ₹{{ doctor.fees }}</li>
                                             <li>Duration: {{ doctor.slot_duration }} minutes</li>
                                         </ul>
                                     </div>

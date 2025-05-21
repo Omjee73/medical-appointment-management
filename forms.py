@@ -33,7 +33,7 @@ class RegisterForm(FlaskForm):
 class DoctorForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired(), Length(min=2, max=100)])
     specialization = StringField('Specialization', validators=[DataRequired()])
-    fees = IntegerField('Fees (in $)', validators=[DataRequired(), NumberRange(min=0)])
+    fees = IntegerField('Fees (in ₹)', validators=[DataRequired(), NumberRange(min=0)])
     address = TextAreaField('Address', validators=[DataRequired()])
     start_time = StringField('Start Time (HH:MM)', validators=[DataRequired()])
     end_time = StringField('End Time (HH:MM)', validators=[DataRequired()])

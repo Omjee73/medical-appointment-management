@@ -95,6 +95,34 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Total Appointments by Specialization -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Total Appointments by Specialization</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="totalSpecializationChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointments by Day of Week -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Appointments by Day of Week</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="dayOfWeekChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -169,6 +197,72 @@
             },
             responsive: true,
             maintainAspectRatio: false
+        }
+    });
+
+    // Total Appointments by Specialization Chart
+    const totalSpecializationCtx = document.getElementById('totalSpecializationChart').getContext('2d');
+    const totalSpecializationChart = new Chart(totalSpecializationCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ total_specialization_labels|tojson }},
+            datasets: [{
+                label: 'Total Appointments',
+                data: {{ total_specialization_counts|tojson }},
+                backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Appointments by Day of Week Chart
+    const dayOfWeekCtx = document.getElementById('dayOfWeekChart').getContext('2d');
+    const dayOfWeekChart = new Chart(dayOfWeekCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ day_names|tojson }},
+            datasets: [{
+                label: 'Total Appointments',
+                data: {{ day_counts|tojson }},
+                backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
         }
     });
 </script>

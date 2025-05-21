@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request, session
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from app import db
+from extensions import db
 from models import User, Patient, Admin
 from forms import LoginForm, RegisterForm
 
@@ -42,7 +42,11 @@ def login():
             else:
                 return redirect(next_page or url_for('user.dashboard'))
         else:
-            flash('Login failed. Please check your email and password.', 'danger')
+            # Check if email exists in database
+            if User.query.filter_by(email=form.email.data).first():
+                flash('Invalid password. Please try again.', 'danger')
+            else:
+                flash('Email not found. New user? Please register first!', 'warning')
     
     return render_template('login.html', form=form)
 

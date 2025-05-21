@@ -61,7 +61,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <p class="mb-1"><strong>Duration:</strong> {{ doctor.slot_duration }} minutes</p>
-                                        <p class="mb-1"><strong>Fees:</strong> ${{ doctor.fees }}</p>
+                                        <p class="mb-1"><strong>Fees:</strong> ₹{{ doctor.fees }}</p>
                                         <p class="mb-0"><strong>Payment:</strong> <span class="badge bg-success">Pending at clinic</span></p>
                                     </div>
                                 </div>
@@ -75,10 +75,7 @@
                 </div>
             </div>
             
-            <div class="receipt-footer">
-                <p class="mb-0">Thank you for choosing our Medical Booking services. For any changes or cancellations, please contact the admin.</p>
-                <p class="mb-0">Generated on: {{ now.strftime('%Y-%m-%d %H:%M') }}</p>
-            </div>
+            
             
             <div class="text-center mt-4">
                 <button class="btn btn-primary" onclick="window.print()">

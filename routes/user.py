@@ -4,7 +4,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy import func
 from datetime import datetime, timedelta
 import io
-from app import db, app
+from extensions import db
+from app_factory import app
 from models import Patient, Doctor, Appointment, TimeSlot
 from forms import AppointmentForm, UserProfileForm
 
@@ -46,58 +47,62 @@ def book_appointment(doctor_id):
     # Initialize form choices
     form.time_slot.choices = [(-1, 'No slots available')]
     
-    # Populate time slots based on selected date
-    if request.method == 'GET':
+    # Get selected date from form or query parameter
+    selected_date = None
+    if request.method == 'POST' and form.date.data:
+        selected_date = form.date.data
+    elif request.method == 'GET':
         selected_date_str = request.args.get('date', today.strftime('%Y-%m-%d'))
         try:
             selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
-            
-            # Check if date is valid (doctor works on this day and date is in future)
-            day_name = selected_date.strftime('%A')
-            if day_name in doctor.available_days_list and selected_date >= today:
-                try:
-                    # Generate slots for that day if not already generated
-                    existing_slots = TimeSlot.query.filter_by(doctor_id=doctor_id, date=selected_date).all()
-                    
-                    if not existing_slots:
-                        # Generate time slots based on doctor's schedule
-                        start_hour, start_minute = map(int, doctor.start_time.split(':'))
-                        end_hour, end_minute = map(int, doctor.end_time.split(':'))
-                        
-                        start_datetime = datetime.combine(selected_date, datetime.min.time().replace(hour=start_hour, minute=start_minute))
-                        end_datetime = datetime.combine(selected_date, datetime.min.time().replace(hour=end_hour, minute=end_minute))
-                        
-                        current_time = start_datetime
-                        while current_time < end_datetime:
-                            slot_time = current_time.strftime('%H:%M')
-                            new_slot = TimeSlot(
-                                doctor_id=doctor_id,
-                                date=selected_date,
-                                start_time=slot_time,
-                                is_booked=False
-                            )
-                            db.session.add(new_slot)
-                            current_time += timedelta(minutes=doctor.slot_duration)
-                        
-                        db.session.commit()
-                    
-                    # Get available slots for the form dropdown
-                    available_slots = TimeSlot.query.filter_by(
-                        doctor_id=doctor_id,
-                        date=selected_date,
-                        is_booked=False
-                    ).all()
-                    
-                    if available_slots:
-                        form.time_slot.choices = [(slot.id, slot.start_time) for slot in available_slots]
-                    form.date.data = selected_date
-                except Exception as e:
-                    app.logger.error(f"Error generating time slots: {str(e)}")
-                    db.session.rollback()
-            
         except Exception as e:
             app.logger.error(f"Error parsing date: {str(e)}")
-            form.date.data = today
+            selected_date = today
+    
+    # Populate time slots based on selected date
+    if selected_date:
+        # Check if date is valid (doctor works on this day and date is in future)
+        day_name = selected_date.strftime('%A')
+        if day_name in doctor.available_days_list and selected_date >= today:
+            try:
+                # Generate slots for that day if not already generated
+                existing_slots = TimeSlot.query.filter_by(doctor_id=doctor_id, date=selected_date).all()
+                
+                if not existing_slots:
+                    # Generate time slots based on doctor's schedule
+                    start_hour, start_minute = map(int, doctor.start_time.split(':'))
+                    end_hour, end_minute = map(int, doctor.end_time.split(':'))
+                    
+                    start_datetime = datetime.combine(selected_date, datetime.min.time().replace(hour=start_hour, minute=start_minute))
+                    end_datetime = datetime.combine(selected_date, datetime.min.time().replace(hour=end_hour, minute=end_minute))
+                    
+                    current_time = start_datetime
+                    while current_time < end_datetime:
+                        slot_time = current_time.strftime('%H:%M')
+                        new_slot = TimeSlot(
+                            doctor_id=doctor_id,
+                            date=selected_date,
+                            start_time=slot_time,
+                            is_booked=False
+                        )
+                        db.session.add(new_slot)
+                        current_time += timedelta(minutes=doctor.slot_duration)
+                    
+                    db.session.commit()
+                
+                # Get available slots for the form dropdown
+                available_slots = TimeSlot.query.filter_by(
+                    doctor_id=doctor_id,
+                    date=selected_date,
+                    is_booked=False
+                ).all()
+                
+                if available_slots:
+                    form.time_slot.choices = [(slot.id, slot.start_time) for slot in available_slots]
+                form.date.data = selected_date
+            except Exception as e:
+                app.logger.error(f"Error generating time slots: {str(e)}")
+                db.session.rollback()
     
     # Process form submission
     if form.validate_on_submit() and form.time_slot.data != -1:
@@ -152,7 +157,7 @@ def book_appointment(doctor_id):
         doctor=doctor,
         patient=current_user,
         available_dates=available_dates,
-        selected_date=form.date.data if form.date.data else today,
+        selected_date=selected_date or today,
         today=today
     )
 
@@ -165,20 +170,7 @@ def appointments():
             patient_id=current_user.id
         ).join(Doctor).all()
         
-        # Update status for completed appointments
-        today = datetime.today().date()
-        
-        # Use a transaction for status updates
-        db.session.begin_nested()
-        
-        for appointment in user_appointments:
-            if appointment.status == 'approved' and appointment.date < today:
-                appointment.status = 'completed'
-        
-        db.session.commit()
-        
     except Exception as e:
-        db.session.rollback()
         app.logger.error(f"Error loading appointments: {str(e)}")
         flash("There was an error loading your appointments.", "danger")
         user_appointments = []
@@ -363,3 +355,38 @@ def edit_profile():
             flash('Current password is incorrect.', 'danger')
     
     return render_template('user/edit_profile.html', form=form)
+
+# Cancel Appointment
+@user_bp.route('/appointments/cancel/<int:appointment_id>', methods=['POST'])
+@login_required
+def cancel_appointment(appointment_id):
+    try:
+        appointment = Appointment.query.get_or_404(appointment_id)
+        
+        # Check if the appointment belongs to the current user
+        if appointment.patient_id != current_user.id:
+            flash('You are not authorized to cancel this appointment.', 'danger')
+            return redirect(url_for('user.appointments'))
+        
+        # Allow cancellation of pending and approved appointments
+        if appointment.status not in ['pending', 'approved']:
+            flash('Only pending or approved appointments can be cancelled.', 'danger')
+            return redirect(url_for('user.appointments'))
+        
+        # Free up the time slot
+        time_slot = TimeSlot.query.get(appointment.slot_id)
+        if time_slot:
+            time_slot.is_booked = False
+        
+        # Delete the appointment
+        db.session.delete(appointment)
+        db.session.commit()
+        
+        flash('Appointment cancelled successfully.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error cancelling appointment: {str(e)}")
+        flash('An error occurred while cancelling the appointment.', 'danger')
+    
+    return redirect(url_for('user.appointments'))

@@ -35,11 +35,9 @@
                                     {% if appointment.status == 'pending' %}
                                         <span class="badge bg-warning">Pending</span>
                                     {% elif appointment.status == 'approved' %}
-                                        {% if appointment.is_completed %}
-                                            <span class="badge bg-info">Completed</span>
-                                        {% else %}
-                                            <span class="badge bg-success">Approved</span>
-                                        {% endif %}
+                                        <span class="badge bg-success">Approved</span>
+                                    {% elif appointment.status == 'completed' %}
+                                        <span class="badge bg-info">Completed</span>
                                     {% elif appointment.status == 'rejected' %}
                                         <span class="badge bg-danger">Rejected</span>
                                     {% endif %}
@@ -55,6 +53,18 @@
                                         <form method="POST" action="{{ url_for('admin.update_appointment_status', appointment_id=appointment.id, status='rejected') }}">
                                             <button type="submit" class="btn btn-sm btn-danger">
                                                 <i class="fas fa-times"></i> Decline
+                                            </button>
+                                        </form>
+                                    {% elif appointment.status == 'approved' %}
+                                        <form method="POST" action="{{ url_for('admin.update_appointment_status', appointment_id=appointment.id, status='completed') }}">
+                                            <button type="submit" class="btn btn-sm btn-info">
+                                                <i class="fas fa-check-double"></i> Mark as Completed
+                                            </button>
+                                        </form>
+                                        
+                                        <form method="POST" action="{{ url_for('admin.update_appointment_status', appointment_id=appointment.id, status='pending') }}">
+                                            <button type="submit" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-clock"></i> Reset to Pending
                                             </button>
                                         </form>
                                     {% else %}

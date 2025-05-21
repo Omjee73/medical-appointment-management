@@ -3,7 +3,8 @@ from flask_login import login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy import func, extract
 from datetime import datetime, timedelta, date
-from app import db, app
+from extensions import db
+from app_factory import app
 from models import Admin, Patient, Doctor, Appointment, TimeSlot, User
 from forms import DoctorForm, AdminProfileForm
 
@@ -47,11 +48,11 @@ def update_appointment_status(appointment_id, status):
         
         appointment = Appointment.query.get_or_404(appointment_id)
         
-        if status in ['approved', 'rejected', 'pending']:
+        if status in ['approved', 'rejected', 'pending', 'completed']:
             appointment.status = status
             
-            # If rejected, free up the time slot
-            if status == 'rejected':
+            # If rejected or cancelled, free up the time slot
+            if status in ['rejected', 'pending']:
                 time_slot = TimeSlot.query.get(appointment.slot_id)
                 if time_slot:
                     time_slot.is_booked = False
@@ -272,6 +273,51 @@ def summary():
     doctor_names = [stat[0] for stat in doctor_stats]
     doctor_counts = [stat[1] for stat in doctor_stats]
     
+    # Get specialization statistics
+    specialization_stats = db.session.query(
+        Doctor.specialization,
+        func.count(Appointment.id).label('appointment_count')
+    ).join(Appointment).group_by(Doctor.specialization).all()
+    
+    specialization_labels = [stat[0] for stat in specialization_stats]
+    specialization_counts = [stat[1] for stat in specialization_stats]
+    
+    # Get total appointments by specialization
+    total_appointments_by_specialization = db.session.query(
+        Doctor.specialization,
+        func.count(Appointment.id).label('total_appointments')
+    ).join(Appointment).group_by(Doctor.specialization).all()
+    
+    total_specialization_labels = [stat[0] for stat in total_appointments_by_specialization]
+    total_specialization_counts = [stat[1] for stat in total_appointments_by_specialization]
+    
+    # Get appointments by day of week
+    try:
+        # For PostgreSQL
+        appointments_by_day = db.session.query(
+            func.extract('dow', Appointment.date).label('day_of_week'),
+            func.count(Appointment.id).label('appointment_count')
+        ).group_by('day_of_week').all()
+    except Exception:
+        # Fallback for SQLite
+        appointments_by_day = db.session.query(
+            func.strftime('%w', Appointment.date).label('day_of_week'),
+            func.count(Appointment.id).label('appointment_count')
+        ).group_by('day_of_week').all()
+    
+    # Initialize counts for all days
+    day_counts = [0] * 7
+    day_names = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    
+    for day, count in appointments_by_day:
+        try:
+            # Convert to integer and handle both PostgreSQL (0-6) and SQLite (0-6) formats
+            day_idx = int(day)
+            if 0 <= day_idx < 7:
+                day_counts[day_idx] = count
+        except (ValueError, TypeError):
+            continue
+    
     return render_template(
         'admin/summary.html', 
         total_doctors=total_doctors,
@@ -280,7 +326,13 @@ def summary():
         dates=dates,
         appointment_counts=appointment_counts,
         doctor_names=doctor_names,
-        doctor_counts=doctor_counts
+        doctor_counts=doctor_counts,
+        specialization_labels=specialization_labels,
+        specialization_counts=specialization_counts,
+        total_specialization_labels=total_specialization_labels,
+        total_specialization_counts=total_specialization_counts,
+        day_names=day_names,
+        day_counts=day_counts
     )
 
 # Admin Profile

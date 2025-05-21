@@ -245,3 +245,22 @@ body {
         font-size: 0.9rem;
     }
 }
+
+.auth-container .alert-info {
+    border-left: 4px solid #17a2b8;
+}
+
+.auth-container .alert-link {
+    font-weight: bold;
+    text-decoration: underline;
+}
+
+.auth-container .bg-light {
+    background-color: #f8f9fa !important;
+    border: 1px solid #e9ecef;
+}
+
+.auth-container .btn-success {
+    padding: 8px 20px;
+    font-weight: 500;
+}
